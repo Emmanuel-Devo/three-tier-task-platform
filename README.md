@@ -1,140 +1,68 @@
 ﻿# Three-Tier Task Platform
 
-A containerized three-tier task management application built with **React, Node.js/Express, MongoDB, Docker, Kubernetes, and Terraform**.
+A containerized task management application built with **React, Node.js/Express, MongoDB, Docker, Kubernetes, Terraform, and GitHub Actions**.
 
-The project demonstrates how a full-stack application can be developed locally, containerized with Docker, deployed to Kubernetes, and managed declaratively with Terraform.
-
-> **Note:** This project is currently deployed and tested locally using Docker Desktop and a Kind Kubernetes cluster. AWS/EKS deployment is not included in the current version.
-
----
+The project demonstrates how a three-tier application can be developed locally, containerized, deployed to Kubernetes, exposed through an NGINX Ingress, monitored with Kubernetes Metrics Server, and managed with Infrastructure as Code.
 
 ## Architecture
 
 ```text
                     ┌─────────────────────┐
                     │       Browser       │
-                    │   React Frontend    │
                     └──────────┬──────────┘
                                │
-                               │ HTTP
                                ▼
                     ┌─────────────────────┐
-                    │    Frontend Tier    │
-                    │ React + Vite + Nginx│
-                    │   Kubernetes Pod    │
-                    └──────────┬──────────┘
-                               │
-                               │ API Requests
-                               ▼
-                    ┌─────────────────────┐
-                    │     Backend Tier    │
-                    │ Node.js + Express   │
-                    │   Kubernetes Pod    │
-                    └──────────┬──────────┘
-                               │
-                               │ MongoDB Protocol
-                               ▼
-                    ┌─────────────────────┐
-                    │    Database Tier    │
-                    │      MongoDB 8      │
-                    │ Persistent Storage   │
-                    └─────────────────────┘
+                    │   NGINX Ingress     │
+                    │      / and /api     │
+                    └───────┬───────┬─────┘
+                            │       │
+                    /       │       │ /api
+                            ▼       ▼
+                 ┌────────────┐  ┌────────────┐
+                 │  Frontend  │  │   Backend  │
+                 │ React/Vite │  │ Node/Express│
+                 └────────────┘  └──────┬─────┘
+                                        │
+                                        ▼
+                                 ┌─────────────┐
+                                 │   MongoDB   │
+                                 │ Persistent  │
+                                 │   Storage   │
+                                 └─────────────┘
 ```
 
-### Infrastructure flow
+## Technology Stack
 
-```text
-Application Code
-      │
-      ▼
-Docker Images
-      │
-      ▼
-Kubernetes / Kind
-      │
-      ├── Frontend Deployment
-      ├── Backend Deployment
-      ├── MongoDB Deployment
-      ├── Kubernetes Services
-      └── PersistentVolumeClaim
-      │
-      ▼
-Terraform
-```
-
----
-
-## Project Overview
-
-The application is a simple task management platform where users can:
-
-* Create tasks
-* View tasks
-* Mark tasks as completed
-* Update tasks
-* Delete tasks
-
-The application is separated into three main tiers:
-
-### 1. Presentation Tier
-
-Built with:
+### Application
 
 * React
 * Vite
 * Axios
-* Nginx
-
-The frontend provides the user interface and communicates with the backend through REST API requests.
-
-### 2. Application Tier
-
-Built with:
-
 * Node.js
 * Express.js
 * Mongoose
-* CORS
+* MongoDB
 
-The backend provides the REST API and handles task operations and communication with MongoDB.
+### DevOps / Infrastructure
 
-### 3. Database Tier
-
-Built with:
-
-* MongoDB 8
-
-MongoDB stores task data using a Kubernetes PersistentVolumeClaim so that data remains available when the MongoDB pod is recreated.
-
----
-
-## Technologies Used
-
-| Category                | Technology                      |
-| ----------------------- | ------------------------------- |
-| Frontend                | React                           |
-| Build Tool              | Vite                            |
-| Backend                 | Node.js / Express               |
-| Database                | MongoDB                         |
-| API Client              | Axios                           |
-| Containerization        | Docker                          |
-| Container Orchestration | Kubernetes                      |
-| Local Kubernetes        | Kind                            |
-| Infrastructure as Code  | Terraform                       |
-| Kubernetes Provider     | Terraform Kubernetes Provider   |
-| Web Server              | Nginx                           |
-| Version Control         | Git / GitHub                    |
-| Operating Environment   | Docker Desktop / Windows + WSL2 |
-
----
+* Docker
+* Docker Compose
+* Kubernetes
+* Kind
+* NGINX Ingress Controller
+* Terraform
+* Kubernetes Metrics Server
+* Git
+* GitHub Actions
 
 ## Project Structure
 
-```text
 three-tier-task-platform/
 │
 ├── .github/
 │   └── workflows/
+│       └── ci.yml
 │
 ├── backend/
 │   ├── src/
@@ -149,8 +77,6 @@ three-tier-task-platform/
 │   │   ├── routes/
 │   │   │   └── taskRoutes.js
 │   │   └── server.js
-│   ├── .dockerignore
-│   ├── .env.example
 │   ├── Dockerfile
 │   ├── package.json
 │   └── package-lock.json
@@ -166,251 +92,230 @@ three-tier-task-platform/
 │   │   ├── App.jsx
 │   │   ├── index.css
 │   │   └── main.jsx
-│   ├── .dockerignore
-│   ├── .env.example
 │   ├── Dockerfile
-│   ├── index.html
 │   ├── package.json
-│   └── vite.config.js
+│   └── package-lock.json
 │
 ├── k8s/
 │   ├── namespace.yaml
 │   ├── backend/
 │   │   └── backend.yaml
+│   ├── frontend/
+│   │   └── frontend.yaml
 │   ├── database/
 │   │   └── mongodb.yaml
-│   └── frontend/
-│       └── frontend.yaml
+│   └── ingress/
+│       └── ingress.yaml
 │
 ├── terraform/
-│   ├── main.tf
-│   ├── outputs.tf
-│   ├── variables.tf
-│   ├── versions.tf
-│   ├── README.md
-│   └── .terraform.lock.hcl
+│   └── Kubernetes infrastructure configuration
 │
 ├── docker-compose.yml
 ├── .gitignore
 └── README.md
-```
 
----
 
 ## Application Features
 
-### Task Management
+The task platform supports:
 
-The backend exposes the following REST API endpoints:
+* Create tasks
+* View tasks
+* Update task completion status
+* Delete tasks
+* Backend health checks
+* Client-side validation
+* Loading and error states
+* MongoDB data persistence
+* Responsive frontend interface
 
-| Method | Endpoint         | Description        |
-| ------ | ---------------- | ------------------ |
-| GET    | `/health`        | API health check   |
-| GET    | `/api/tasks`     | Retrieve all tasks |
-| POST   | `/api/tasks`     | Create a task      |
-| PUT    | `/api/tasks/:id` | Update a task      |
-| DELETE | `/api/tasks/:id` | Delete a task      |
+### Backend API
 
-Example task:
-
-```json
-{
-  "title": "Learn Kubernetes",
-  "completed": false
-}
-```
-
----
+| Method | Endpoint         | Purpose              |
+| ------ | ---------------- | -------------------- |
+| GET    | /health        | Backend health check |
+| GET    | /api/tasks     | Get all tasks        |
+| POST   | /api/tasks     | Create a task        |
+| PUT    | /api/tasks/:id | Update a task        |
+| DELETE | /api/tasks/:id | Delete a task        |
 
 ## Docker
 
-Each application component is containerized separately.
+Both the frontend and backend have their own Dockerfiles.
 
-### Backend
+The frontend uses a multi-stage build:
 
-The backend uses a Node.js Alpine image and exposes port `8080`.
+1. Node.js builds the React application.
+2. NGINX serves the production build.
 
-### Frontend
+The backend uses a Node.js Alpine image and runs the Express API.
 
-The frontend uses a multi-stage Docker build:
+MongoDB runs using the official MongoDB container image.
 
-```text
-Node.js
-   │
-   ├── Install dependencies
-   ├── Build React application
-   │
-   ▼
-Nginx
-   │
-   └── Serve production frontend
-```
+## Docker Compose
 
-### MongoDB
+Before Kubernetes deployment, the complete application was tested using Docker Compose.
 
-MongoDB runs as its own container and uses a named Docker volume for local persistence.
+The Compose stack contains:
 
----
+* MongoDB
+* Node.js backend
+* React frontend
+* Custom Docker network
+* Persistent MongoDB volume
+* Health checks
+* Container restart policies
 
-## Running with Docker Compose
+Start the complete stack with:
 
-From the project root:
-
-```bash
+bash
 docker compose up -d --build
-```
 
-Check the containers:
 
-```bash
+Check the services:
+
+bash
 docker compose ps
-```
 
-The application can then be accessed at:
 
-```text
-Frontend:
-http://localhost:3000
+Stop the stack:
 
-Backend:
-http://localhost:8080
-
-Health check:
-http://localhost:8080/health
-```
-
-To stop the application:
-
-```bash
+bash
 docker compose down
-```
 
-The MongoDB named volume is preserved unless it is explicitly removed.
-
----
 
 ## Kubernetes Deployment
 
-The application was also deployed to a local Kubernetes cluster using **Kind**.
+The application was deployed locally to a dedicated Kubernetes cluster created with Kind.
 
 Create the cluster:
 
-```bash
+bash
 kind create cluster --name task-platform
-```
 
-Verify the cluster:
 
-```bash
-kubectl get nodes
-```
-
-Expected result:
-
-```text
-task-platform-control-plane   Ready   control-plane
-```
-
----
-
-## Deploying the Application to Kubernetes
-
-Create the namespace:
-
-```bash
+Create the application namespace:
+bash
 kubectl apply -f k8s/namespace.yaml
-```
+
 
 Deploy MongoDB:
 
-```bash
+bash
 kubectl apply -f k8s/database/mongodb.yaml
-```
+
 
 Deploy the backend:
 
-```bash
+bash
 kubectl apply -f k8s/backend/backend.yaml
-```
+
 
 Deploy the frontend:
 
-```bash
+bash
 kubectl apply -f k8s/frontend/frontend.yaml
-```
 
-Check the resources:
 
-```bash
+Install the NGINX Ingress Controller for Kind:
+
+bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+
+
+Apply the application Ingress:
+
+bash
+kubectl apply -f k8s/ingress/ingress.yaml
+
+
+Check the application:
+
+bash
 kubectl get all -n task-platform
-```
 
-Check persistent storage:
-
-```bash
-kubectl get pvc -n task-platform
-```
-
----
 
 ## Kubernetes Services
 
-The application uses internal Kubernetes Services for communication between components.
+The application uses separate Kubernetes Services for each tier:
 
-### MongoDB
+* frontend — ClusterIP service
+* backend — ClusterIP service
+* mongodb — ClusterIP service
 
-```text
-mongodb:27017
-```
+The frontend and backend are kept internal to the cluster and are accessed through the NGINX Ingress.
 
-### Backend
+## NGINX Ingress
 
-```text
-backend:8080
-```
+NGINX Ingress provides a single entry point for the application.
 
-### Frontend
+Routing:
 
-```text
-frontend:80
-```
+text
+/       → frontend service
+/api    → backend service
 
-The backend connects to MongoDB using the Kubernetes service name:
 
-```text
-mongodb://mongodb:27017/task_platform
-```
+The Ingress configuration is stored in:
 
-This allows Kubernetes DNS to resolve the MongoDB service internally.
+text
+k8s/ingress/ingress.yaml
 
----
+
+For the local Kind environment, the Ingress controller is accessed through port forwarding:
+
+bash
+kubectl port-forward service/ingress-nginx-controller 8080:80 -n ingress-nginx
+
+
+The application can then be accessed at:
+
+
+http://localhost:8080
+
+
+## MongoDB Persistence
+
+MongoDB uses a Kubernetes PersistentVolumeClaim.
+
+The database storage is defined in:
+
+k8s/database/mongodb.yaml
+
+
+Persistence was tested by:
+
+1. Creating a task.
+2. Deleting the MongoDB pod.
+3. Allowing Kubernetes to recreate the pod.
+4. Refreshing the application.
+5. Confirming that the task was still present.
+
+This verified that application data survives MongoDB pod recreation.
 
 ## Health Checks
 
-The backend deployment includes Kubernetes:
+The backend exposes:
 
-* Liveness probe
-* Readiness probe
-
-The probes use:
-
-```text
 GET /health
-```
 
-The frontend uses a TCP readiness and liveness check on port `80`.
 
-This helps Kubernetes determine whether containers are ready to receive traffic and whether they need to be restarted.
+Kubernetes uses this endpoint for:
 
----
+* Liveness probes
+* Readiness probes
+
+The frontend also has Kubernetes liveness and readiness checks.
+
+This allows Kubernetes to determine whether the application containers are healthy and ready to receive traffic.
 
 ## Resource Management
 
-Kubernetes resource requests and limits were configured for the application containers.
+The frontend and backend deployments include CPU and memory requests and limits.
 
 Example:
 
-```yaml
+yaml
 resources:
   requests:
     cpu: "100m"
@@ -418,37 +323,40 @@ resources:
   limits:
     cpu: "500m"
     memory: "256Mi"
-```
 
-This prevents the workloads from consuming unlimited resources on the local Kubernetes cluster.
 
----
+This helps Kubernetes manage workload resources within the local cluster.
 
-## Persistent Storage Test
+## Monitoring
 
-MongoDB was configured with a Kubernetes PersistentVolumeClaim:
+Kubernetes Metrics Server was installed to provide basic resource monitoring.
 
-```text
-mongodb-pvc
-```
+Check node resource usage:
 
-The persistence was tested by:
+bash
+kubectl top nodes
 
-1. Creating a task through the application.
-2. Deleting the MongoDB pod.
-3. Allowing Kubernetes to recreate the MongoDB pod.
-4. Checking the application again.
-5. Confirming that the task was still available.
 
-This demonstrated that the MongoDB data was stored on persistent storage rather than only inside the container filesystem.
+Check pod resource usage:
 
----
+bash
+kubectl top pods -n task-platform
+
+
+Example cluster monitoring result:
+
+
+CPU:    244m
+Memory: 1686Mi
+
+
+The project uses Metrics Server instead of a full Prometheus/Grafana stack to keep the local development environment lightweight.
 
 ## Terraform
 
-Terraform is used to manage the Kubernetes infrastructure declaratively.
+Terraform is used to manage the Kubernetes infrastructure as Code.
 
-The Terraform configuration manages:
+The Terraform configuration manages resources including:
 
 * Kubernetes namespace
 * MongoDB PersistentVolumeClaim
@@ -461,180 +369,176 @@ The Terraform configuration manages:
 
 Initialize Terraform:
 
-```bash
+bash
 cd terraform
 terraform init
-```
+
 
 Format the configuration:
 
-```bash
+bash
 terraform fmt
-```
+
 
 Validate the configuration:
 
-```bash
+bash
 terraform validate
-```
 
-Review the infrastructure:
 
-```bash
+Preview infrastructure changes:
+
+bash
 terraform plan
-```
+
 
 The final Terraform plan was verified with:
 
-```text
 No changes. Your infrastructure matches the configuration.
-```
 
-This confirms that the Terraform configuration matches the existing Kubernetes resources.
+## CI with GitHub Actions
 
----
+GitHub Actions automatically checks the project when changes are pushed to the `master` branch or when a pull request is opened.
 
-## Local Access
-
-Because the Kubernetes Services are internal `ClusterIP` services, port forwarding is used for local browser access.
+The workflow performs:
 
 ### Backend
 
-```bash
-kubectl port-forward service/backend 8080:8080 -n task-platform
-```
+* Installs dependencies using `npm ci`
+* Checks Node.js syntax
+* Verifies important backend files
 
 ### Frontend
 
-```bash
-kubectl port-forward service/frontend 3000:80 -n task-platform
-```
+* Installs dependencies
+* Builds the React application
 
-Then open:
+### Docker
 
-```text
-http://localhost:3000
-```
+* Builds the backend Docker image
+* Builds the frontend Docker image
 
-The frontend communicates with the backend through:
+Workflow file:
 
-```text
-http://localhost:8080
-```
+.github/workflows/ci.yml
 
----
 
-## What I Practiced
+The GitHub Actions workflow has been successfully tested and completed with passing jobs.
 
-This project was used to practice several Cloud and DevOps concepts:
+## Local Development
 
-* Building a full-stack application
-* REST API development
-* Docker image creation
-* Docker Compose
-* Container networking
-* Kubernetes Deployments
-* Kubernetes Services
-* Kubernetes Namespaces
-* Kubernetes health probes
-* Kubernetes resource requests and limits
-* PersistentVolumeClaims
-* Kubernetes pod recovery
-* Kubernetes service discovery
-* Kind local Kubernetes clusters
-* Terraform
-* Infrastructure as Code
-* Git and GitHub
-* Environment variables
-* Multi-stage Docker builds
-* Nginx
-* Application troubleshooting
+### Backend
 
----
+bash
+cd backend
+npm ci
+npm start
 
-## DevOps Workflow
 
-```text
-Develop
-   │
-   ▼
-Test Application
-   │
-   ▼
-Build Docker Images
-   │
-   ▼
-Run with Docker Compose
-   │
-   ▼
-Deploy to Kubernetes
-   │
-   ▼
-Test Kubernetes Workloads
-   │
-   ▼
-Manage Infrastructure with Terraform
-   │
-   ▼
-Push Changes to GitHub
-```
+### Frontend
 
----
+bash
+cd frontend
+npm ci
+npm run dev
 
-## Current Environment
 
-This project was developed and tested locally using:
+### Docker Compose
 
-* Windows
-* WSL2
-* Docker Desktop
-* Git Bash
-* Kind
-* kubectl
-* Terraform
+bash
+docker compose up -d --build
 
-The project is designed so that the infrastructure can later be adapted for a cloud Kubernetes environment such as Amazon EKS.
+### Kubernetes
 
----
+bash
+kubectl get all -n task-platform
+
+## Project Verification
+
+The final Kubernetes environment was verified with:
+
+bash
+kubectl get all -n task-platform
+
+
+Current application components:
+
+Backend     → Running
+Frontend    → Running
+MongoDB     → Running
+Services    → Running
+Ingress     → Running
+
+The NGINX Ingress Controller was also verified:
+
+bash
+kubectl get pods -n ingress-nginx
+
+Metrics Server was verified with:
+
+bash
+kubectl get pods -n kube-system | grep metrics-server
+kubectl top nodes
+
+## Current Deployment Status
+
+This project is currently configured and tested as a **local Kubernetes deployment using Kind**.
+
+AWS EKS is not required for the current implementation.
+
+The Terraform configuration currently manages the local Kubernetes environment rather than provisioning AWS infrastructure.
+
+A future version can be extended to deploy the same application to AWS EKS when cloud resources are available.
+
+## What This Project Demonstrates
+
+This project demonstrates practical experience with:
+
+* Building a three-tier web application
+* Containerizing applications with Docker
+* Managing multi-container applications with Docker Compose
+* Deploying applications to Kubernetes
+* Creating Kubernetes Deployments and Services
+* Configuring health checks
+* Managing persistent storage
+* Configuring NGINX Ingress routing
+* Monitoring Kubernetes resource usage
+* Managing Kubernetes infrastructure with Terraform
+* Implementing CI with GitHub Actions
+* Using Git and GitHub for version control
+* Testing application availability and data persistence
 
 ## Future Improvements
 
-Planned improvements include:
+Possible future improvements include:
 
-* GitHub Actions CI/CD
-* Automated Docker image builds
-* Container image registry
-* Kubernetes Ingress
-* HTTPS/TLS
-* Application monitoring
-* Prometheus and Grafana
-* Horizontal Pod Autoscaling
-* Cloud deployment
-* Automated Terraform workflows
-
----
+* Deploying to AWS EKS
+* Adding HTTPS/TLS
+* Adding Kubernetes Secrets
+* Adding Horizontal Pod Autoscaling
+* Adding centralized logging
+* Adding Prometheus and Grafana when additional resources are available
+* Adding automated Kubernetes deployment through CI/CD
 
 ## Project Status
 
-**Status: Completed local implementation**
+**Completed and tested locally.**
 
-The three-tier application has been:
+The application has been successfully:
 
-* Containerized with Docker
+* Containerized
 * Tested with Docker Compose
 * Deployed to Kubernetes
-* Tested with Kubernetes health checks
-* Configured with persistent MongoDB storage
-* Tested for pod recovery and data persistence
-* Managed with Terraform
-* Pushed to GitHub
-
----
+* Exposed through NGINX Ingress
+* Tested for MongoDB persistence
+* Validated with Terraform
+* Checked through GitHub Actions
+* Monitored with Kubernetes Metrics Server
 
 ## Author
 
-**Emmanuel Chukwuere**
+**Emmanuel Bullion**
 
-Cloud Engineering | DevOps | Linux | Docker | Kubernetes | Terraform
+Cloud Engineering / DevOps
 
-GitHub: [Emmanuel-Devo](https://github.com/Emmanuel-Devo)
+GitHub: Emmanuel-Devo
